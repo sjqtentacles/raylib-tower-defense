@@ -1,4 +1,3 @@
-// towers.h
 #ifndef TOWERS_H
 #define TOWERS_H
 
@@ -25,13 +24,18 @@ typedef struct Tower {
     DamageType damageType;
     int goldCost;
     int specialCost;
-    FirePattern firePattern;  // New fire pattern field
+    FirePattern firePattern;
+    int towerIndex;  // Track the type of tower placed (e.g., 0 for blue circle, 1 for red square, etc.)
 } Tower;
+
 
 // Functions related to towers
 void InitializeTowers();
-void AddTower(Vector2 position, int range, int damage, int rateOfFire, DamageType damageType, int goldCost, int specialCost, FirePattern firePattern);
+void AddTower(Vector2 position, int range, int damage, int rateOfFire, DamageType damageType, int goldCost, int specialCost, FirePattern firePattern, int towerIndex);
 void DrawTowers(int cellSize, Tower *selectedTower);
 Tower* GetTowerAtPosition(Vector2 gridPos);
+
+// Declare DrawTowerStatsWithBackground so it's known in main.c
+void DrawTowerStatsWithBackground(Tower *tower, int cellSize);
 
 #endif // TOWERS_H

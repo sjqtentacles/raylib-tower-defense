@@ -1,8 +1,6 @@
 #include "raylib.h"
 
-// Function to draw the HUD and player stats
 void DrawHUD(int windowWidth, int windowHeight, int playerGold, int playerSanity) {
-    // Draw the player stats on the left, 1/3 of the screen width
     int hudHeight = 100;
     int leftWidth = windowWidth / 3;
     
