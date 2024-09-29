@@ -1,34 +1,44 @@
-#include <stddef.h>       // Include for NULL
+#include <stddef.h>
 #include "raylib.h"
-#include "map.h"          // For drawing the grid
-#include "towers.h"       // Tower-related logic
-#include "input.h"        // Input-related logic
-#include "hud.h"          // HUD drawing functions
-#include "tower_panel.h"  // Tower panel functions
-#include "tower_config.h" // Tower configurations
-#include "tower_logic.h"  // Tower placement logic
+#include "map.h"
+#include "towers.h"
+#include "input.h"
+#include "hud.h"
+#include "tower_panel.h"
+#include "tower_config.h"
+#include "tower_logic.h"
 
 #define INITIAL_GOLD 10000
 #define INITIAL_SANITY 500
+#define MAX_LEVEL 3  // Example: 3 levels
 
 // Player resources
 int playerGold = INITIAL_GOLD;
 int playerSanity = INITIAL_SANITY;
+int currentLevel = 1;
+bool gameOver = false;
 
-Tower availableTowers[5]; // Array to store configured towers
-int towerCount = 0;       // Number of configured towers
+Tower availableTowers[5];  // Array to store configured towers
+int towerCount = 0;        // Number of configured towers
+
+void AdvanceLevel() {
+    if (currentLevel < MAX_LEVEL) {
+        currentLevel++;
+        playerGold = INITIAL_GOLD;
+        playerSanity = INITIAL_SANITY;
+    } else {
+        gameOver = true;  // End game after the last level
+    }
+}
 
 int main(void) {
-    const int gridWidth = 20;
-    const int gridHeight = 15;
-    const int cellSize = 40;
-    const int windowWidth = gridWidth * cellSize;
-    const int windowHeight = gridHeight * cellSize + 100;  // Add space for HUD
+    Path currentPath = GeneratePathForLevel(currentLevel);
+    int windowWidth = currentPath.gridWidth * currentPath.cellSize;
+    int windowHeight = currentPath.gridHeight * currentPath.cellSize + 100;  // Add space for HUD
 
-    InitWindow(windowWidth, windowHeight, "Tower Defense with Modular HUD");
+    InitWindow(windowWidth, windowHeight, "Tower Defense with Multiple Levels");
     SetTargetFPS(60);
 
-    // Initialize towers
     InitializeTowers();
     ConfigureTowers(availableTowers, &towerCount);
 
@@ -45,23 +55,39 @@ int main(void) {
                     currentTowerIndex = -1;
                 }
             } else if (currentTowerIndex != -1) {
-                Vector2 gridPos = GetMouseGridPosition(cellSize);
-                PlaceTower(currentTowerIndex, gridPos, &playerGold, &playerSanity);
+                Vector2 gridPos = GetMouseGridPosition(currentPath.cellSize);
+                PlaceTower(currentTowerIndex, gridPos, &playerGold, &playerSanity, currentPath);
             }
+        }
+
+        // Advance to the next level when the player presses Enter
+        if (IsKeyPressed(KEY_ENTER)) {
+            FreePath(currentPath);
+            AdvanceLevel();
+            currentPath = GeneratePathForLevel(currentLevel);
+            windowWidth = currentPath.gridWidth * currentPath.cellSize;
+            windowHeight = currentPath.gridHeight * currentPath.cellSize + 100;
+            SetWindowSize(windowWidth, windowHeight);  // Adjust window size for new level
         }
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        Draw2DGrid(gridWidth, gridHeight, cellSize);
-        DrawTowers(cellSize, NULL);  // Simplified: You can modify to pass selectedTower if needed
+        Draw2DGrid(currentPath.gridWidth, currentPath.gridHeight, currentPath.cellSize);
+        DrawPathAndGoal(currentPath);
+        DrawTowers(currentPath.cellSize, NULL);  // Simplified: You can modify to pass selectedTower if needed
 
         // Draw HUD (left for stats, right for towers)
         DrawHUD(windowWidth, windowHeight, playerGold, playerSanity);
         DrawTowerPanel(windowWidth, windowHeight, playerGold, playerSanity);
 
         EndDrawing();
+
+        if (gameOver) {
+            break;  // Exit the loop when the game is over
+        }
     }
 
+    FreePath(currentPath);
     CloseWindow();
 }
